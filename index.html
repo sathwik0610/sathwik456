@@ -29,27 +29,29 @@ border-radius:12px;
 margin-bottom:20px;
 }
 
-.subject{
-margin-bottom:15px;
+.percent{
+font-size:36px;
+color:#22c55e;
+margin-top:10px;
 }
 
 .progress{
 width:100%;
-height:15px;
+height:20px;
 background:#334155;
 border-radius:10px;
-margin-top:5px;
+margin-top:10px;
 }
 
 .bar{
-height:15px;
+height:20px;
 background:#22c55e;
 border-radius:10px;
 }
 
 button{
-padding:6px 12px;
-margin:4px;
+padding:10px 15px;
+margin:5px;
 border:none;
 border-radius:6px;
 font-weight:bold;
@@ -68,7 +70,7 @@ color:white;
 table{
 width:100%;
 border-collapse:collapse;
-margin-top:10px;
+margin-top:15px;
 }
 
 th,td{
@@ -79,87 +81,51 @@ padding:8px;
 th{
 background:#2563eb;
 }
+
 </style><script>
 
-let subjects={
-WT:{a:0,t:0},
-OS:{a:0,t:0},
-DAA:{a:0,t:0},
-CAALP:{a:0,t:0},
-BT:{a:0,t:0},
-ENG:{a:0,t:0}
-};
+let attended=182;
+let conducted=257;
 
 function update(){
 
-for(let sub in subjects){
+let percent=(attended/conducted)*100;
 
-let a=subjects[sub].a;
-let t=subjects[sub].t;
+document.getElementById("attended").innerHTML=attended;
+document.getElementById("conducted").innerHTML=conducted;
 
-let percent=0;
+document.getElementById("percent").innerHTML=percent.toFixed(2)+"%";
 
-if(t>0){
-percent=(a/t)*100;
+document.getElementById("bar").style.width=percent+"%";
+
+let need=Math.ceil((0.75*conducted)-attended);
+
+if(percent>=75){
+document.getElementById("msg").innerHTML="Safe Attendance 😎";
+}else{
+document.getElementById("msg").innerHTML="Attend "+need+" more classes to reach 75%";
 }
 
-document.getElementById(sub+"p").innerHTML=percent.toFixed(1)+"%";
-
-document.getElementById(sub+"bar").style.width=percent+"%";
-
 }
 
-}
-
-function present(sub){
-
-subjects[sub].a++;
-subjects[sub].t++;
-
+function present(){
+attended++;
+conducted++;
 update();
-
 }
 
-function absent(sub){
-
-subjects[sub].t++;
-
+function absent(){
+conducted++;
 update();
-
 }
 
-</script></head><body onload="update()"><header>Attendance Portal</header><div class="container"><div class="card"><h2>Student Details</h2><p>Name : Sathwik</p>
-<p>Course : B.Tech</p></div><div class="card"><h2>Subjects Attendance</h2><div class="subject">
-WT : <span id="WTp"></span>
-<div class="progress"><div class="bar" id="WTbar"></div></div>
-<button class="present" onclick="present('WT')">Present</button>
-<button class="absent" onclick="absent('WT')">Absent</button>
-</div><div class="subject">
-OS : <span id="OSp"></span>
-<div class="progress"><div class="bar" id="OSbar"></div></div>
-<button class="present" onclick="present('OS')">Present</button>
-<button class="absent" onclick="absent('OS')">Absent</button>
-</div><div class="subject">
-DAA : <span id="DAAp"></span>
-<div class="progress"><div class="bar" id="DAAbar"></div></div>
-<button class="present" onclick="present('DAA')">Present</button>
-<button class="absent" onclick="absent('DAA')">Absent</button>
-</div><div class="subject">
-CAALP : <span id="CAALPp"></span>
-<div class="progress"><div class="bar" id="CAALPbar"></div></div>
-<button class="present" onclick="present('CAALP')">Present</button>
-<button class="absent" onclick="absent('CAALP')">Absent</button>
-</div><div class="subject">
-BT : <span id="BTp"></span>
-<div class="progress"><div class="bar" id="BTbar"></div></div>
-<button class="present" onclick="present('BT')">Present</button>
-<button class="absent" onclick="absent('BT')">Absent</button>
-</div><div class="subject">
-English : <span id="ENGp"></span>
-<div class="progress"><div class="bar" id="ENGbar"></div></div>
-<button class="present" onclick="present('ENG')">Present</button>
-<button class="absent" onclick="absent('ENG')">Absent</button>
-</div></div><div class="card"><h2>Weekly Timetable</h2><table><tr>
+</script></head><body onload="update()"><header>Attendance Portal</header><div class="container"><div class="card"><h2>Overall Attendance</h2><p>Attended Classes : <span id="attended"></span></p>
+<p>Conducted Classes : <span id="conducted"></span></p><div class="percent" id="percent"></div><div class="progress">
+<div class="bar" id="bar"></div>
+</div><p id="msg"></p><button class="present" onclick="present()">Present</button>
+<button class="absent" onclick="absent()">Absent</button>
+
+</div><div class="card"><h2>Weekly Timetable</h2><table><tr>
 <th>Day</th>
 <th>Subjects</th>
 </tr><tr>
