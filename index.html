@@ -1,0 +1,231 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sathwik AIML 2B Attendance</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#0b1c2c;
+color:white;
+}
+
+header{
+text-align:center;
+padding:20px;
+background:#071626;
+font-size:22px;
+}
+
+.container{
+padding:20px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:15px;
+}
+
+.card{
+background:#12304f;
+padding:20px;
+border-radius:12px;
+text-align:center;
+}
+
+.big{
+font-size:30px;
+color:#00ffd5;
+}
+
+.subject{
+background:#12304f;
+padding:15px;
+border-radius:10px;
+margin-top:10px;
+}
+
+button{
+padding:8px 14px;
+margin:5px;
+border:none;
+border-radius:6px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.present{
+background:#00ff9c;
+}
+
+.absent{
+background:#ff4d6d;
+color:white;
+}
+
+.history{
+background:#12304f;
+padding:10px;
+margin-top:8px;
+border-radius:8px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+Welcome Sathwik 👋  
+<br>
+AIML 2B Attendance Dashboard
+</header>
+
+<div class="container">
+
+<h2>Dashboard</h2>
+
+<div class="grid">
+
+<div class="card">
+<div class="big" id="percent"></div>
+Attendance %
+</div>
+
+<div class="card">
+<div class="big" id="present"></div>
+Present
+</div>
+
+<div class="card">
+<div class="big" id="absent"></div>
+Absent
+</div>
+
+<div class="card">
+<div class="big" id="total"></div>
+Total Classes
+</div>
+
+</div>
+
+<h2>Today's Subjects</h2>
+
+<div class="subject">
+Operating Systems
+<br>
+<button class="present" onclick="mark('Operating Systems','P')">Present</button>
+<button class="absent" onclick="mark('Operating Systems','A')">Absent</button>
+</div>
+
+<div class="subject">
+Web Technologies
+<br>
+<button class="present" onclick="mark('Web Technologies','P')">Present</button>
+<button class="absent" onclick="mark('Web Technologies','A')">Absent</button>
+</div>
+
+<div class="subject">
+Computer Architecture
+<br>
+<button class="present" onclick="mark('Computer Architecture','P')">Present</button>
+<button class="absent" onclick="mark('Computer Architecture','A')">Absent</button>
+</div>
+
+<div class="subject">
+Design Thinking
+<br>
+<button class="present" onclick="mark('Design Thinking','P')">Present</button>
+<button class="absent" onclick="mark('Design Thinking','A')">Absent</button>
+</div>
+
+<div class="subject">
+Machine Learning
+<br>
+<button class="present" onclick="mark('Machine Learning','P')">Present</button>
+<button class="absent" onclick="mark('Machine Learning','A')">Absent</button>
+</div>
+
+<h2>Attendance History</h2>
+
+<div id="history"></div>
+
+</div>
+
+<script>
+
+let present = localStorage.getItem("present") || 182;
+let total = localStorage.getItem("total") || 257;
+let history = JSON.parse(localStorage.getItem("history")) || [];
+
+present = parseInt(present);
+total = parseInt(total);
+
+function update(){
+
+let absent = total - present;
+let percent = (present/total)*100;
+
+document.getElementById("present").innerText = present;
+document.getElementById("absent").innerText = absent;
+document.getElementById("total").innerText = total;
+document.getElementById("percent").innerText = percent.toFixed(2)+"%";
+
+localStorage.setItem("present",present);
+localStorage.setItem("total",total);
+
+showHistory();
+
+}
+
+function mark(subject,status){
+
+let today = new Date().toLocaleDateString();
+
+history.push(today + " | " + subject + " | " + status);
+
+if(status=="P"){
+present++;
+}
+
+total++;
+
+localStorage.setItem("history",JSON.stringify(history));
+
+update();
+
+}
+
+function showHistory(){
+
+let div=document.getElementById("history");
+
+div.innerHTML="";
+
+history.slice().reverse().forEach(item=>{
+
+let el=document.createElement("div");
+
+el.className="history";
+
+el.innerText=item;
+
+div.appendChild(el);
+
+});
+
+}
+
+update();
+
+</script>
+
+</body>
+</html>
+```
