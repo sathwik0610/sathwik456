@@ -71,15 +71,19 @@ background:#22c55e;
 border-radius:10px;
 }
 
-table{
-width:100%;
-border-collapse:collapse;
+.historyCard{
+background:#142a52;
+padding:10px;
+margin-top:10px;
+border-radius:10px;
 }
 
-td,th{
-border:1px solid #334155;
-padding:8px;
-text-align:center;
+.tag{
+background:#22c55e;
+padding:4px 8px;
+border-radius:6px;
+margin:3px;
+display:inline-block;
 }
 
 .nav{
@@ -90,7 +94,6 @@ background:#0c1b36;
 display:flex;
 justify-content:space-around;
 padding:10px 0;
-font-size:14px;
 }
 
 .nav div{
@@ -101,6 +104,8 @@ cursor:pointer;
 
 let attended=182;
 let conducted=257;
+
+let history=JSON.parse(localStorage.getItem("attendanceHistory"))||[];
 
 const timetable={
 Monday:["WT","BT","LAB","LAB","DAA"],
@@ -116,31 +121,64 @@ function update(){
 let percent=(attended/conducted)*100;
 
 document.getElementById("percent").innerText=percent.toFixed(2)+"%";
+
 document.getElementById("attended").innerText=attended;
 document.getElementById("conducted").innerText=conducted;
 
 document.getElementById("bar").style.width=percent+"%";
 
-let bunk=Math.floor((attended/0.75)-conducted);
-
-if(bunk>0){
-document.getElementById("bunk").innerText="You can bunk "+bunk+" classes";
-}else{
-let need=Math.ceil((0.75*conducted)-attended);
-document.getElementById("bunk").innerText="Attend "+need+" classes to reach 75%";
 }
 
-}
+function mark(subject,status){
 
-function present(){
+conducted++;
+
+if(status==="P"){
 attended++;
-conducted++;
-update();
 }
 
-function absent(){
-conducted++;
+let today=new Date().toISOString().split("T")[0];
+
+let record=history.find(r=>r.date===today);
+
+if(!record){
+
+record={date:today,subjects:[]};
+
+history.push(record);
+
+}
+
+record.subjects.push(subject+" "+status);
+
+localStorage.setItem("attendanceHistory",JSON.stringify(history));
+
 update();
+
+renderHistory();
+
+}
+
+function renderHistory(){
+
+let box=document.getElementById("historyBox");
+
+box.innerHTML="";
+
+history.slice().reverse().forEach(r=>{
+
+let div=document.createElement("div");
+
+div.className="historyCard";
+
+div.innerHTML=
+"<b>"+r.date+"</b><br>"+
+r.subjects.map(s=>"<span class='tag'>"+s+"</span>").join(" ");
+
+box.appendChild(div);
+
+});
+
 }
 
 function showSection(id){
@@ -174,8 +212,8 @@ div.className="period";
 div.innerHTML=
 "<span>"+sub+"</span>"+
 "<div>"+
-"<button class='present' onclick='present()'>P</button>"+
-"<button class='absent' onclick='absent()'>A</button>"+
+"<button class='present' onclick=\"mark('"+sub+"','P')\">P</button>"+
+"<button class='absent' onclick=\"mark('"+sub+"','A')\">A</button>"+
 "</div>";
 
 container.appendChild(div);
@@ -186,16 +224,10 @@ container.appendChild(div);
 
 }
 
-function holiday(){
-
-document.getElementById("todayClasses").innerHTML=
-"<div class='card'>Holiday - No Classes</div>";
-
-}
-
 function start(){
 
 update();
+renderHistory();
 showSection("home");
 
 }
@@ -203,35 +235,7 @@ showSection("home");
 </script></head><body onload="start()"><header>Attendance Tracker</header><div id="home" class="section"><div class="card"><h3>Overall Attendance</h3><p>Attended: <span id="attended"></span></p>
 <p>Conducted: <span id="conducted"></span></p><h2 id="percent"></h2><div class="progress">
 <div id="bar" class="bar"></div>
-</div><p id="bunk"></p></div></div><div id="mark" class="section"><div class="card"><h3>Mark Attendance</h3><label>Select Date:</label>
-<input type="date" id="datePicker" onchange="loadDay()">
-
-<button onclick="holiday()">Holiday</button>
-
-<div id="todayClasses"></div></div></div><div id="timetable" class="section"><div class="card"><h3>Weekly Timetable</h3><table><tr>
-<th>Day</th>
-<th>Subjects</th>
-</tr><tr>
-<td>Monday</td>
-<td>WT BT LAB LAB DAA</td>
-</tr><tr>
-<td>Tuesday</td>
-<td>CAALP WT VAC VAC LAB LAB</td>
-</tr><tr>
-<td>Wednesday</td>
-<td>OS WT LAB LAB DT DT</td>
-</tr><tr>
-<td>Thursday</td>
-<td>OS DAA CAALP BT English English</td>
-</tr><tr>
-<td>Friday</td>
-<td>WT OS DAA CAALP</td>
-</tr><tr>
-<td>Saturday</td>
-<td>WT OS CAALP DAA</td>
-</tr></table></div></div><div id="analytics" class="section"><div class="card"><h3>Analytics</h3><p>Your attendance percentage is shown on the home dashboard.</p></div></div><div id="history" class="section"><div class="card"><h3>History</h3><p>Attendance records can be stored here.</p></div></div><div class="nav"><div onclick="showSection('home')">🏠 Home</div>
-<div onclick="showSection('mark')">✅ Mark</div>
-<div onclick="showSection('timetable')">📋 Timetable</div>
-<div onclick="showSection('analytics')">📊 Analytics</div>
-<div onclick="showSection('history')">📜 History</div></div></body>
+</div></div></div><div id="markPage" class="section"><div class="card"><h3>Mark Attendance</h3><input type="date" id="datePicker" onchange="loadDay()"><div id="todayClasses"></div></div></div><div id="historyPage" class="section"><div class="card"><h3>Attendance History</h3><div id="historyBox"></div></div></div><div class="nav"><div onclick="showSection('home')">🏠 Home</div>
+<div onclick="showSection('markPage')">✅ Mark</div>
+<div onclick="showSection('historyPage')">📜 History</div></div></body>
 </html>
