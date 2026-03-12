@@ -1,6 +1,7 @@
 <!DOCTYPE html><html>
-<head><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance Tracker</title><style>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance Tracker</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><style>
 
 body{
 font-family:Arial;
@@ -16,10 +17,9 @@ font-size:22px;
 background:#0c1b36;
 }
 
-.section{
-display:none;
+.container{
 padding:15px;
-padding-bottom:90px;
+padding-bottom:80px;
 }
 
 .card{
@@ -27,7 +27,6 @@ background:#0e1f3d;
 border-radius:14px;
 padding:15px;
 margin-bottom:15px;
-box-shadow:0 0 15px #0f4cff33;
 }
 
 .period{
@@ -45,6 +44,7 @@ padding:6px 12px;
 border:none;
 border-radius:6px;
 font-weight:bold;
+cursor:pointer;
 }
 
 .present{
@@ -57,33 +57,12 @@ background:#dc2626;
 color:white;
 }
 
-.progress{
-width:100%;
-height:18px;
-background:#1e293b;
-border-radius:10px;
-margin-top:10px;
+.selectedP{
+background:#22c55e !important;
 }
 
-.bar{
-height:18px;
-background:#22c55e;
-border-radius:10px;
-}
-
-.historyCard{
-background:#142a52;
-padding:10px;
-margin-top:10px;
-border-radius:10px;
-}
-
-.tag{
-background:#22c55e;
-padding:4px 8px;
-border-radius:6px;
-margin:3px;
-display:inline-block;
+.selectedA{
+background:#ef4444 !important;
 }
 
 .nav{
@@ -100,12 +79,24 @@ padding:10px 0;
 cursor:pointer;
 }
 
+canvas{
+background:white;
+border-radius:10px;
+}
+
 </style><script>
 
-let attended=182;
-let conducted=257;
+let overallAttended=182;
+let overallConducted=257;
 
-let history=JSON.parse(localStorage.getItem("attendanceHistory"))||[];
+let weekly={
+Mon:0,
+Tue:0,
+Wed:0,
+Thu:0,
+Fri:0,
+Sat:0
+};
 
 const timetable={
 Monday:["WT","BT","LAB","LAB","DAA"],
@@ -116,75 +107,9 @@ Friday:["WT","OS","DAA","CAALP"],
 Saturday:["WT","OS","CAALP","DAA"]
 };
 
-function update(){
-
-let percent=(attended/conducted)*100;
-
-document.getElementById("percent").innerText=percent.toFixed(2)+"%";
-
-document.getElementById("attended").innerText=attended;
-document.getElementById("conducted").innerText=conducted;
-
-document.getElementById("bar").style.width=percent+"%";
-
-}
-
-function mark(subject,status){
-
-conducted++;
-
-if(status==="P"){
-attended++;
-}
-
-let today=new Date().toISOString().split("T")[0];
-
-let record=history.find(r=>r.date===today);
-
-if(!record){
-
-record={date:today,subjects:[]};
-
-history.push(record);
-
-}
-
-record.subjects.push(subject+" "+status);
-
-localStorage.setItem("attendanceHistory",JSON.stringify(history));
-
-update();
-
-renderHistory();
-
-}
-
-function renderHistory(){
-
-let box=document.getElementById("historyBox");
-
-box.innerHTML="";
-
-history.slice().reverse().forEach(r=>{
-
-let div=document.createElement("div");
-
-div.className="historyCard";
-
-div.innerHTML=
-"<b>"+r.date+"</b><br>"+
-r.subjects.map(s=>"<span class='tag'>"+s+"</span>").join(" ");
-
-box.appendChild(div);
-
-});
-
-}
-
 function showSection(id){
 
 document.querySelectorAll(".section").forEach(s=>s.style.display="none");
-
 document.getElementById(id).style.display="block";
 
 }
@@ -197,11 +122,11 @@ let day=new Date(date).toLocaleString("en-US",{weekday:"long"});
 
 let subjects=timetable[day];
 
-let container=document.getElementById("todayClasses");
+let box=document.getElementById("todayClasses");
 
-container.innerHTML="";
+box.innerHTML="";
 
-if(subjects){
+if(!subjects) return;
 
 subjects.forEach(sub=>{
 
@@ -212,30 +137,90 @@ div.className="period";
 div.innerHTML=
 "<span>"+sub+"</span>"+
 "<div>"+
-"<button class='present' onclick=\"mark('"+sub+"','P')\">P</button>"+
-"<button class='absent' onclick=\"mark('"+sub+"','A')\">A</button>"+
+"<button class='present' onclick=\"mark(this,'"+day+"','P')\">P</button>"+
+"<button class='absent' onclick=\"mark(this,'"+day+"','A')\">A</button>"+
 "</div>";
 
-container.appendChild(div);
+box.appendChild(div);
 
 });
 
 }
 
+function mark(btn,day,status){
+
+let parent=btn.parentElement;
+
+parent.querySelectorAll("button").forEach(b=>{
+b.classList.remove("selectedP");
+b.classList.remove("selectedA");
+});
+
+if(status==="P"){
+btn.classList.add("selectedP");
+overallAttended++;
+}else{
+btn.classList.add("selectedA");
+}
+
+overallConducted++;
+
+let key=day.substring(0,3);
+
+weekly[key]++;
+
+updateGraph();
+
+}
+
+let chart;
+
+function createGraph(){
+
+let ctx=document.getElementById("weeklyChart");
+
+chart=new Chart(ctx,{
+
+type:"bar",
+
+data:{
+labels:["Mon","Tue","Wed","Thu","Fri","Sat"],
+datasets:[{
+label:"Classes Marked",
+data:Object.values(weekly),
+backgroundColor:"#22c55e"
+}]
+},
+
+options:{
+scales:{
+y:{
+beginAtZero:true
+}
+}
+}
+
+});
+
+}
+
+function updateGraph(){
+
+chart.data.datasets[0].data=Object.values(weekly);
+chart.update();
+
 }
 
 function start(){
 
-update();
-renderHistory();
-showSection("home");
+showSection("mark");
+
+createGraph();
 
 }
 
-</script></head><body onload="start()"><header>Attendance Tracker</header><div id="home" class="section"><div class="card"><h3>Overall Attendance</h3><p>Attended: <span id="attended"></span></p>
-<p>Conducted: <span id="conducted"></span></p><h2 id="percent"></h2><div class="progress">
-<div id="bar" class="bar"></div>
-</div></div></div><div id="markPage" class="section"><div class="card"><h3>Mark Attendance</h3><input type="date" id="datePicker" onchange="loadDay()"><div id="todayClasses"></div></div></div><div id="historyPage" class="section"><div class="card"><h3>Attendance History</h3><div id="historyBox"></div></div></div><div class="nav"><div onclick="showSection('home')">🏠 Home</div>
-<div onclick="showSection('markPage')">✅ Mark</div>
-<div onclick="showSection('historyPage')">📜 History</div></div></body>
+</script></head><body onload="start()"><header>Attendance Tracker</header><div id="mark" class="section container"><div class="card"><h3>Select Date</h3><input type="date" id="datePicker" onchange="loadDay()"><div id="todayClasses"></div></div></div><div id="graphSection" class="section container"><div class="card"><h3>Weekly Attendance Graph</h3><canvas id="weeklyChart"></canvas>
+
+</div></div><div class="nav"><div onclick="showSection('mark')">✅ Mark</div>
+<div onclick="showSection('graphSection')">📊 Graph</div></div></body>
 </html>
