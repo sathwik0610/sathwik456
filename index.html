@@ -1,5 +1,6 @@
 <!DOCTYPE html><html>
-<head><meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sathwik Attendance Portal</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><style>
 
 body{
@@ -57,27 +58,43 @@ background:#dc2626;
 color:white;
 }
 
-.selectedP{
-background:#22c55e !important;
-}
-
-.selectedA{
-background:#ef4444 !important;
-}
+.selectedP{background:#22c55e!important;}
+.selectedA{background:#ef4444!important;}
 
 .progress{
 width:100%;
-height:10px;
+height:8px;
 background:#1e293b;
 border-radius:10px;
 margin-top:5px;
 }
 
 .bar{
-height:10px;
+height:8px;
 background:#22c55e;
 border-radius:10px;
 }
+
+.historyCard{
+background:#142a52;
+padding:10px;
+margin-top:10px;
+border-radius:10px;
+}
+
+.calendarDay{
+display:inline-block;
+width:40px;
+height:40px;
+margin:3px;
+line-height:40px;
+text-align:center;
+border-radius:6px;
+background:#142a52;
+}
+
+.presentDay{background:#16a34a;}
+.absentDay{background:#dc2626;}
 
 .nav{
 position:fixed;
@@ -89,9 +106,7 @@ justify-content:space-around;
 padding:10px 0;
 }
 
-.nav div{
-cursor:pointer;
-}
+.nav div{cursor:pointer;}
 
 canvas{
 background:white;
@@ -102,6 +117,9 @@ border-radius:10px;
 
 let attended=182;
 let conducted=257;
+
+let history={};
+let subjectStats={};
 
 const timetable={
 Monday:["WT","BT","LAB","LAB","DAA"],
@@ -121,44 +139,42 @@ function updateOverall(){
 
 let percent=(attended/conducted)*100;
 
+document.getElementById("percent").innerText=percent.toFixed(2)+"%";
 document.getElementById("attended").innerText=attended;
 document.getElementById("conducted").innerText=conducted;
-document.getElementById("percent").innerText=percent.toFixed(2)+"%";
 
 let bunk=Math.floor((attended/0.75)-conducted);
 
-if(bunk>0){
-document.getElementById("bunk").innerText="You can bunk "+bunk+" classes";
-}else{
-let need=Math.ceil((0.75*conducted)-attended);
-document.getElementById("bunk").innerText="Attend "+need+" more classes";
-}
+document.getElementById("bunk").innerText =
+bunk>0 ? "You can bunk "+bunk+" classes" :
+"Attend "+Math.ceil((0.75*conducted)-attended)+" more classes";
 
 }
 
 function loadToday(){
 
 let today=new Date().toLocaleString("en-US",{weekday:"long"});
+let date=new Date().toISOString().split("T")[0];
 
 document.getElementById("today").innerText=today;
 
 let subjects=timetable[today];
-
 let box=document.getElementById("todayClasses");
 
 box.innerHTML="";
 
 subjects.forEach(sub=>{
 
-let div=document.createElement("div");
+if(!subjectStats[sub]) subjectStats[sub]={a:0,t:0};
 
+let div=document.createElement("div");
 div.className="period";
 
 div.innerHTML=
 "<span>"+sub+"</span>"+
 "<div>"+
-"<button class='present' onclick=\"mark(this,'P')\">P</button>"+
-"<button class='absent' onclick=\"mark(this,'A')\">A</button>"+
+"<button class='present' onclick=\"mark(this,'"+date+"','"+sub+"','P')\">P</button>"+
+"<button class='absent' onclick=\"mark(this,'"+date+"','"+sub+"','A')\">A</button>"+
 "</div>";
 
 box.appendChild(div);
@@ -167,7 +183,7 @@ box.appendChild(div);
 
 }
 
-function mark(btn,status){
+function mark(btn,date,subject,status){
 
 let parent=btn.parentElement;
 
@@ -177,15 +193,123 @@ b.classList.remove("selectedA");
 });
 
 conducted++;
+subjectStats[subject].t++;
 
 if(status==="P"){
 attended++;
+subjectStats[subject].a++;
 btn.classList.add("selectedP");
 }else{
 btn.classList.add("selectedA");
 }
 
+if(!history[date]) history[date]=[];
+history[date].push(subject+" "+status);
+
+renderHistory();
+renderSubjects();
 updateOverall();
+updateGraph();
+renderCalendar();
+
+}
+
+function renderHistory(){
+
+let box=document.getElementById("historyBox");
+box.innerHTML="";
+
+Object.keys(history).reverse().forEach(date=>{
+
+let div=document.createElement("div");
+div.className="historyCard";
+
+div.innerHTML="<b>"+date+"</b><br>"+history[date].join("<br>");
+
+box.appendChild(div);
+
+});
+
+}
+
+function renderSubjects(){
+
+let box=document.getElementById("subjectStats");
+box.innerHTML="";
+
+Object.keys(subjectStats).forEach(sub=>{
+
+let a=subjectStats[sub].a;
+let t=subjectStats[sub].t;
+let percent=t?((a/t)*100).toFixed(1):0;
+
+let div=document.createElement("div");
+div.className="card";
+
+div.innerHTML=
+"<b>"+sub+"</b><br>"+percent+"%"+
+"<div class='progress'><div class='bar' style='width:"+percent+"%'></div></div>";
+
+box.appendChild(div);
+
+});
+
+}
+
+function renderCalendar(){
+
+let box=document.getElementById("calendar");
+box.innerHTML="";
+
+for(let i=1;i<=31;i++){
+
+let day="2026-03-"+(i<10?"0"+i:i);
+
+let div=document.createElement("div");
+div.className="calendarDay";
+
+if(history[day]){
+
+if(history[day].some(x=>x.includes("P")))
+div.classList.add("presentDay");
+else
+div.classList.add("absentDay");
+
+}
+
+div.innerText=i;
+
+box.appendChild(div);
+
+}
+
+}
+
+let chart;
+
+function createGraph(){
+
+let ctx=document.getElementById("chart");
+
+chart=new Chart(ctx,{
+type:"line",
+data:{
+labels:["Start","Now"],
+datasets:[{
+label:"Attendance %",
+data:[70.82,70.82],
+borderColor:"green"
+}]
+}
+});
+
+}
+
+function updateGraph(){
+
+let percent=(attended/conducted)*100;
+chart.data.datasets[0].data[1]=percent;
+chart.update();
 
 }
 
@@ -193,11 +317,46 @@ function start(){
 
 updateOverall();
 loadToday();
+createGraph();
+renderCalendar();
+
 showSection("home");
 
 }
 
-</script></head><body onload="start()"><header>Attendance Portal</header><div id="home" class="section"><div class="card"><h3>Overall Attendance</h3><p>Attended: <span id="attended"></span></p>
-<p>Conducted: <span id="conducted"></span></p><h2 id="percent"></h2><p id="bunk"></p></div></div><div id="mark" class="section"><div class="card"><h3>Today's Classes (<span id="today"></span>)</h3><div id="todayClasses"></div></div></div><div class="nav"><div onclick="showSection('home')">🏠 Home</div>
-<div onclick="showSection('mark')">✅ Mark</div></div></body>
+</script></head><body onload="start()"><header>Attendance Portal</header><div id="home" class="section"><div class="card">
+<h3>Overall Attendance</h3>
+<p>Attended: <span id="attended"></span></p>
+<p>Conducted: <span id="conducted"></span></p>
+<h2 id="percent"></h2>
+<p id="bunk"></p>
+</div></div><div id="mark" class="section"><div class="card">
+<h3>Today's Classes (<span id="today"></span>)</h3>
+<div id="todayClasses"></div>
+</div></div><div id="subjects" class="section">
+<h3>Subject Dashboard</h3>
+<div id="subjectStats"></div>
+</div><div id="history" class="section">
+<div class="card">
+<h3>Day-wise Attendance</h3>
+<div id="historyBox"></div>
+</div>
+</div><div id="calendarSection" class="section">
+<div class="card">
+<h3>Monthly Calendar</h3>
+<div id="calendar"></div>
+</div>
+</div><div id="graph" class="section">
+<div class="card">
+<h3>Attendance Graph</h3>
+<canvas id="chart"></canvas>
+</div>
+</div><div class="nav">
+<div onclick="showSection('home')">🏠 Home</div>
+<div onclick="showSection('mark')">✅ Mark</div>
+<div onclick="showSection('subjects')">📊 Subjects</div>
+<div onclick="showSection('history')">📅 History</div>
+<div onclick="showSection('calendarSection')">🗓 Calendar</div>
+<div onclick="showSection('graph')">📈 Graph</div>
+</div></body>
 </html>
