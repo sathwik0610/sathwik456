@@ -1,58 +1,55 @@
-```html
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sathwik AIML 2B Attendance</title>
-
-<style>
-
+<title>Sathwik Attendance Portal</title><style>
 body{
-margin:0;
 font-family:Arial;
-background:#0b1c2c;
+background:#0f172a;
 color:white;
+margin:0;
+text-align:center;
 }
 
 header{
-text-align:center;
+background:#2563eb;
 padding:20px;
-background:#071626;
-font-size:22px;
+font-size:28px;
+font-weight:bold;
 }
 
 .container{
-padding:20px;
-}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(2,1fr);
-gap:15px;
+width:90%;
+margin:auto;
+margin-top:20px;
 }
 
 .card{
-background:#12304f;
+background:#1e293b;
 padding:20px;
 border-radius:12px;
-text-align:center;
-}
-
-.big{
-font-size:30px;
-color:#00ffd5;
+margin-bottom:20px;
 }
 
 .subject{
-background:#12304f;
-padding:15px;
+margin-bottom:15px;
+}
+
+.progress{
+width:100%;
+height:15px;
+background:#334155;
 border-radius:10px;
-margin-top:10px;
+margin-top:5px;
+}
+
+.bar{
+height:15px;
+background:#22c55e;
+border-radius:10px;
 }
 
 button{
-padding:8px 14px;
-margin:5px;
+padding:6px 12px;
+margin:4px;
 border:none;
 border-radius:6px;
 font-weight:bold;
@@ -60,172 +57,128 @@ cursor:pointer;
 }
 
 .present{
-background:#00ff9c;
+background:#22c55e;
 }
 
 .absent{
-background:#ff4d6d;
+background:#ef4444;
 color:white;
 }
 
-.history{
-background:#12304f;
-padding:10px;
-margin-top:8px;
-border-radius:8px;
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
 }
 
-</style>
+th,td{
+border:1px solid #334155;
+padding:8px;
+}
 
-</head>
+th{
+background:#2563eb;
+}
+</style><script>
 
-<body>
-
-<header>
-Welcome Sathwik 👋  
-<br>
-AIML 2B Attendance Dashboard
-</header>
-
-<div class="container">
-
-<h2>Dashboard</h2>
-
-<div class="grid">
-
-<div class="card">
-<div class="big" id="percent"></div>
-Attendance %
-</div>
-
-<div class="card">
-<div class="big" id="present"></div>
-Present
-</div>
-
-<div class="card">
-<div class="big" id="absent"></div>
-Absent
-</div>
-
-<div class="card">
-<div class="big" id="total"></div>
-Total Classes
-</div>
-
-</div>
-
-<h2>Today's Subjects</h2>
-
-<div class="subject">
-Operating Systems
-<br>
-<button class="present" onclick="mark('Operating Systems','P')">Present</button>
-<button class="absent" onclick="mark('Operating Systems','A')">Absent</button>
-</div>
-
-<div class="subject">
-Web Technologies
-<br>
-<button class="present" onclick="mark('Web Technologies','P')">Present</button>
-<button class="absent" onclick="mark('Web Technologies','A')">Absent</button>
-</div>
-
-<div class="subject">
-Computer Architecture
-<br>
-<button class="present" onclick="mark('Computer Architecture','P')">Present</button>
-<button class="absent" onclick="mark('Computer Architecture','A')">Absent</button>
-</div>
-
-<div class="subject">
-Design Thinking
-<br>
-<button class="present" onclick="mark('Design Thinking','P')">Present</button>
-<button class="absent" onclick="mark('Design Thinking','A')">Absent</button>
-</div>
-
-<div class="subject">
-Machine Learning
-<br>
-<button class="present" onclick="mark('Machine Learning','P')">Present</button>
-<button class="absent" onclick="mark('Machine Learning','A')">Absent</button>
-</div>
-
-<h2>Attendance History</h2>
-
-<div id="history"></div>
-
-</div>
-
-<script>
-
-let present = localStorage.getItem("present") || 182;
-let total = localStorage.getItem("total") || 257;
-let history = JSON.parse(localStorage.getItem("history")) || [];
-
-present = parseInt(present);
-total = parseInt(total);
+let subjects={
+WT:{a:0,t:0},
+OS:{a:0,t:0},
+DAA:{a:0,t:0},
+CAALP:{a:0,t:0},
+BT:{a:0,t:0},
+ENG:{a:0,t:0}
+};
 
 function update(){
 
-let absent = total - present;
-let percent = (present/total)*100;
+for(let sub in subjects){
 
-document.getElementById("present").innerText = present;
-document.getElementById("absent").innerText = absent;
-document.getElementById("total").innerText = total;
-document.getElementById("percent").innerText = percent.toFixed(2)+"%";
+let a=subjects[sub].a;
+let t=subjects[sub].t;
 
-localStorage.setItem("present",present);
-localStorage.setItem("total",total);
+let percent=0;
 
-showHistory();
+if(t>0){
+percent=(a/t)*100;
+}
+
+document.getElementById(sub+"p").innerHTML=percent.toFixed(1)+"%";
+
+document.getElementById(sub+"bar").style.width=percent+"%";
 
 }
 
-function mark(subject,status){
-
-let today = new Date().toLocaleDateString();
-
-history.push(today + " | " + subject + " | " + status);
-
-if(status=="P"){
-present++;
 }
 
-total++;
+function present(sub){
 
-localStorage.setItem("history",JSON.stringify(history));
+subjects[sub].a++;
+subjects[sub].t++;
 
 update();
 
 }
 
-function showHistory(){
+function absent(sub){
 
-let div=document.getElementById("history");
-
-div.innerHTML="";
-
-history.slice().reverse().forEach(item=>{
-
-let el=document.createElement("div");
-
-el.className="history";
-
-el.innerText=item;
-
-div.appendChild(el);
-
-});
-
-}
+subjects[sub].t++;
 
 update();
 
-</script>
+}
 
-</body>
+</script></head><body onload="update()"><header>Attendance Portal</header><div class="container"><div class="card"><h2>Student Details</h2><p>Name : Sathwik</p>
+<p>Course : B.Tech</p></div><div class="card"><h2>Subjects Attendance</h2><div class="subject">
+WT : <span id="WTp"></span>
+<div class="progress"><div class="bar" id="WTbar"></div></div>
+<button class="present" onclick="present('WT')">Present</button>
+<button class="absent" onclick="absent('WT')">Absent</button>
+</div><div class="subject">
+OS : <span id="OSp"></span>
+<div class="progress"><div class="bar" id="OSbar"></div></div>
+<button class="present" onclick="present('OS')">Present</button>
+<button class="absent" onclick="absent('OS')">Absent</button>
+</div><div class="subject">
+DAA : <span id="DAAp"></span>
+<div class="progress"><div class="bar" id="DAAbar"></div></div>
+<button class="present" onclick="present('DAA')">Present</button>
+<button class="absent" onclick="absent('DAA')">Absent</button>
+</div><div class="subject">
+CAALP : <span id="CAALPp"></span>
+<div class="progress"><div class="bar" id="CAALPbar"></div></div>
+<button class="present" onclick="present('CAALP')">Present</button>
+<button class="absent" onclick="absent('CAALP')">Absent</button>
+</div><div class="subject">
+BT : <span id="BTp"></span>
+<div class="progress"><div class="bar" id="BTbar"></div></div>
+<button class="present" onclick="present('BT')">Present</button>
+<button class="absent" onclick="absent('BT')">Absent</button>
+</div><div class="subject">
+English : <span id="ENGp"></span>
+<div class="progress"><div class="bar" id="ENGbar"></div></div>
+<button class="present" onclick="present('ENG')">Present</button>
+<button class="absent" onclick="absent('ENG')">Absent</button>
+</div></div><div class="card"><h2>Weekly Timetable</h2><table><tr>
+<th>Day</th>
+<th>Subjects</th>
+</tr><tr>
+<td>Monday</td>
+<td>WT, BT, LAB (2), DAA</td>
+</tr><tr>
+<td>Tuesday</td>
+<td>CAALP, WT, VAC, LAB (2)</td>
+</tr><tr>
+<td>Wednesday</td>
+<td>OS, WT, LAB, DT (2)</td>
+</tr><tr>
+<td>Thursday</td>
+<td>OS, DAA, CAALP, BT, English (2)</td>
+</tr><tr>
+<td>Friday</td>
+<td>WT, OS, DAA, CAALP</td>
+</tr><tr>
+<td>Saturday</td>
+<td>WT, OS, CAALP, DAA</td>
+</tr></table></div></div></body>
 </html>
-```
