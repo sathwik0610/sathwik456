@@ -1,9 +1,10 @@
 <!DOCTYPE html><html>
-<head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Attendance Tracker</title><style>
+<head><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance Tracker</title><style>
 
 body{
 font-family:Arial;
-background:#0b1a2a;
+background:#050b17;
 color:white;
 margin:0;
 }
@@ -11,20 +12,22 @@ margin:0;
 header{
 text-align:center;
 padding:15px;
-background:#0f172a;
 font-size:22px;
+background:#0c1b36;
 }
 
-.container{
+.section{
+display:none;
 padding:15px;
-padding-bottom:80px;
+padding-bottom:90px;
 }
 
 .card{
-background:#13253a;
-border-radius:12px;
+background:#0e1f3d;
+border-radius:14px;
 padding:15px;
 margin-bottom:15px;
+box-shadow:0 0 15px #0f4cff33;
 }
 
 .period{
@@ -32,8 +35,8 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 margin-top:10px;
-padding:10px;
-background:#0f2238;
+padding:12px;
+background:#142a52;
 border-radius:10px;
 }
 
@@ -41,17 +44,16 @@ button{
 padding:6px 12px;
 border:none;
 border-radius:6px;
-margin-left:5px;
 font-weight:bold;
 }
 
-.p{
-background:#22c55e;
+.present{
+background:#16a34a;
 color:white;
 }
 
-.a{
-background:#ef4444;
+.absent{
+background:#dc2626;
 color:white;
 }
 
@@ -80,156 +82,133 @@ padding:8px;
 text-align:center;
 }
 
-.historyCard{
-background:#0f2238;
-border-radius:12px;
-padding:12px;
-margin:10px 0;
-}
-
-.tag{
-background:#16a34a;
-padding:5px 8px;
-border-radius:6px;
-margin:3px;
-display:inline-block;
-}
-
 .nav{
 position:fixed;
 bottom:0;
 width:100%;
-background:#0f172a;
+background:#0c1b36;
 display:flex;
 justify-content:space-around;
 padding:10px 0;
+font-size:14px;
+}
+
+.nav div{
+cursor:pointer;
 }
 
 </style><script>
 
-let attended = 182;
-let conducted = 257;
-
-let records = JSON.parse(localStorage.getItem("attendance")) || [];
+let attended=182;
+let conducted=257;
 
 const timetable={
 Monday:["WT","BT","LAB","LAB","DAA"],
 Tuesday:["CAALP","WT","VAC","VAC","LAB","LAB"],
-Wednesday:["OS","WT","LAB","DT","DT"],
+Wednesday:["OS","WT","LAB","LAB","DT","DT"],
 Thursday:["OS","DAA","CAALP","BT","English","English"],
 Friday:["WT","OS","DAA","CAALP"],
 Saturday:["WT","OS","CAALP","DAA"]
 };
 
-function updateStats(){
+function update(){
 
-let percent = (attended / conducted) * 100;
+let percent=(attended/conducted)*100;
 
-document.getElementById("attended").innerHTML = attended;
-document.getElementById("conducted").innerHTML = conducted;
-document.getElementById("percent").innerHTML = percent.toFixed(2) + "%";
+document.getElementById("percent").innerText=percent.toFixed(2)+"%";
+document.getElementById("attended").innerText=attended;
+document.getElementById("conducted").innerText=conducted;
 
-document.getElementById("bar").style.width = percent + "%";
+document.getElementById("bar").style.width=percent+"%";
+
+let bunk=Math.floor((attended/0.75)-conducted);
+
+if(bunk>0){
+document.getElementById("bunk").innerText="You can bunk "+bunk+" classes";
+}else{
+let need=Math.ceil((0.75*conducted)-attended);
+document.getElementById("bunk").innerText="Attend "+need+" classes to reach 75%";
+}
 
 }
 
-function markAttendance(subject,status){
-
-conducted++;
-
-if(status === "P"){
+function present(){
 attended++;
+conducted++;
+update();
 }
 
-let today = new Date().toISOString().split("T")[0];
-
-let record = records.find(r => r.date === today);
-
-if(!record){
-record = {date:today, subjects:[]};
-records.push(record);
+function absent(){
+conducted++;
+update();
 }
 
-record.subjects.push(subject+" "+status);
+function showSection(id){
 
-localStorage.setItem("attendance",JSON.stringify(records));
+document.querySelectorAll(".section").forEach(s=>s.style.display="none");
 
-updateStats();
-showHistory();
+document.getElementById(id).style.display="block";
 
 }
 
-function showHistory(){
+function loadDay(){
 
-let box = document.getElementById("history");
+let date=document.getElementById("datePicker").value;
 
-box.innerHTML = "";
+let day=new Date(date).toLocaleString("en-US",{weekday:"long"});
 
-records.slice().reverse().forEach(r => {
+let subjects=timetable[day];
 
-let div = document.createElement("div");
+let container=document.getElementById("todayClasses");
 
-div.className = "historyCard";
+container.innerHTML="";
 
-div.innerHTML =
-"<b>"+r.date+"</b><br>" +
-r.subjects.map(s=>"<span class='tag'>"+s+"</span>").join(" ");
+if(subjects){
 
-box.appendChild(div);
+subjects.forEach(sub=>{
 
-});
-
-}
-
-function showToday(){
-
-let today = new Date().toLocaleString("en-US",{weekday:"long"});
-
-document.getElementById("today").innerHTML = today;
-
-let list = timetable[today];
-
-let box = document.getElementById("todayClasses");
-
-box.innerHTML="";
-
-if(list){
-
-list.forEach(function(sub){
-
-let div = document.createElement("div");
+let div=document.createElement("div");
 
 div.className="period";
 
-div.innerHTML =
-sub+
+div.innerHTML=
+"<span>"+sub+"</span>"+
 "<div>"+
-"<button class='p' onclick=\"markAttendance('"+sub+"','P')\">✓ P</button>"+
-"<button class='a' onclick=\"markAttendance('"+sub+"','A')\">✗ A</button>"+
+"<button class='present' onclick='present()'>P</button>"+
+"<button class='absent' onclick='absent()'>A</button>"+
 "</div>";
 
-box.appendChild(div);
+container.appendChild(div);
 
 });
 
 }
+
+}
+
+function holiday(){
+
+document.getElementById("todayClasses").innerHTML=
+"<div class='card'>Holiday - No Classes</div>";
 
 }
 
 function start(){
 
-updateStats();
-showToday();
-showHistory();
+update();
+showSection("home");
 
 }
 
-</script></head><body onload="start()"><header>Attendance Tracker</header><div class="container"><div class="card"><h3>Overall Attendance</h3>Attended: <span id="attended"></span><br>
-Conducted: <span id="conducted"></span>
-
-<h2 id="percent"></h2><div class="progress">
+</script></head><body onload="start()"><header>Attendance Tracker</header><div id="home" class="section"><div class="card"><h3>Overall Attendance</h3><p>Attended: <span id="attended"></span></p>
+<p>Conducted: <span id="conducted"></span></p><h2 id="percent"></h2><div class="progress">
 <div id="bar" class="bar"></div>
-</div></div><div class="card"><h3>Today's Classes (<span id="today"></span>)</h3><div id="todayClasses"></div></div><div class="card"><h3>Weekly Timetable</h3><table><tr>
+</div><p id="bunk"></p></div></div><div id="mark" class="section"><div class="card"><h3>Mark Attendance</h3><label>Select Date:</label>
+<input type="date" id="datePicker" onchange="loadDay()">
+
+<button onclick="holiday()">Holiday</button>
+
+<div id="todayClasses"></div></div></div><div id="timetable" class="section"><div class="card"><h3>Weekly Timetable</h3><table><tr>
 <th>Day</th>
 <th>Subjects</th>
 </tr><tr>
@@ -240,7 +219,7 @@ Conducted: <span id="conducted"></span>
 <td>CAALP WT VAC VAC LAB LAB</td>
 </tr><tr>
 <td>Wednesday</td>
-<td>OS WT LAB DT DT</td>
+<td>OS WT LAB LAB DT DT</td>
 </tr><tr>
 <td>Thursday</td>
 <td>OS DAA CAALP BT English English</td>
@@ -250,9 +229,9 @@ Conducted: <span id="conducted"></span>
 </tr><tr>
 <td>Saturday</td>
 <td>WT OS CAALP DAA</td>
-</tr></table></div><div class="card"><h3>Attendance History</h3><div id="history"></div></div></div><div class="nav"><div>🏠 Home</div>
-<div>✅ Mark</div>
-<div>📋 Timetable</div>
-<div>📊 Analytics</div>
-<div>📜 History</div></div></body>
+</tr></table></div></div><div id="analytics" class="section"><div class="card"><h3>Analytics</h3><p>Your attendance percentage is shown on the home dashboard.</p></div></div><div id="history" class="section"><div class="card"><h3>History</h3><p>Attendance records can be stored here.</p></div></div><div class="nav"><div onclick="showSection('home')">🏠 Home</div>
+<div onclick="showSection('mark')">✅ Mark</div>
+<div onclick="showSection('timetable')">📋 Timetable</div>
+<div onclick="showSection('analytics')">📊 Analytics</div>
+<div onclick="showSection('history')">📜 History</div></div></body>
 </html>
