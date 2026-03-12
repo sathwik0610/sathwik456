@@ -1,7 +1,6 @@
 <!DOCTYPE html><html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance Tracker</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><style>
+<head><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sathwik Attendance Portal</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><style>
 
 body{
 font-family:Arial;
@@ -17,9 +16,10 @@ font-size:22px;
 background:#0c1b36;
 }
 
-.container{
+.section{
+display:none;
 padding:15px;
-padding-bottom:80px;
+padding-bottom:90px;
 }
 
 .card{
@@ -65,6 +65,20 @@ background:#22c55e !important;
 background:#ef4444 !important;
 }
 
+.progress{
+width:100%;
+height:10px;
+background:#1e293b;
+border-radius:10px;
+margin-top:5px;
+}
+
+.bar{
+height:10px;
+background:#22c55e;
+border-radius:10px;
+}
+
 .nav{
 position:fixed;
 bottom:0;
@@ -86,17 +100,8 @@ border-radius:10px;
 
 </style><script>
 
-let overallAttended=182;
-let overallConducted=257;
-
-let weekly={
-Mon:0,
-Tue:0,
-Wed:0,
-Thu:0,
-Fri:0,
-Sat:0
-};
+let attended=182;
+let conducted=257;
 
 const timetable={
 Monday:["WT","BT","LAB","LAB","DAA"],
@@ -108,25 +113,40 @@ Saturday:["WT","OS","CAALP","DAA"]
 };
 
 function showSection(id){
-
 document.querySelectorAll(".section").forEach(s=>s.style.display="none");
 document.getElementById(id).style.display="block";
+}
+
+function updateOverall(){
+
+let percent=(attended/conducted)*100;
+
+document.getElementById("attended").innerText=attended;
+document.getElementById("conducted").innerText=conducted;
+document.getElementById("percent").innerText=percent.toFixed(2)+"%";
+
+let bunk=Math.floor((attended/0.75)-conducted);
+
+if(bunk>0){
+document.getElementById("bunk").innerText="You can bunk "+bunk+" classes";
+}else{
+let need=Math.ceil((0.75*conducted)-attended);
+document.getElementById("bunk").innerText="Attend "+need+" more classes";
+}
 
 }
 
-function loadDay(){
+function loadToday(){
 
-let date=document.getElementById("datePicker").value;
+let today=new Date().toLocaleString("en-US",{weekday:"long"});
 
-let day=new Date(date).toLocaleString("en-US",{weekday:"long"});
+document.getElementById("today").innerText=today;
 
-let subjects=timetable[day];
+let subjects=timetable[today];
 
 let box=document.getElementById("todayClasses");
 
 box.innerHTML="";
-
-if(!subjects) return;
 
 subjects.forEach(sub=>{
 
@@ -137,8 +157,8 @@ div.className="period";
 div.innerHTML=
 "<span>"+sub+"</span>"+
 "<div>"+
-"<button class='present' onclick=\"mark(this,'"+day+"','P')\">P</button>"+
-"<button class='absent' onclick=\"mark(this,'"+day+"','A')\">A</button>"+
+"<button class='present' onclick=\"mark(this,'P')\">P</button>"+
+"<button class='absent' onclick=\"mark(this,'A')\">A</button>"+
 "</div>";
 
 box.appendChild(div);
@@ -147,7 +167,7 @@ box.appendChild(div);
 
 }
 
-function mark(btn,day,status){
+function mark(btn,status){
 
 let parent=btn.parentElement;
 
@@ -156,71 +176,28 @@ b.classList.remove("selectedP");
 b.classList.remove("selectedA");
 });
 
+conducted++;
+
 if(status==="P"){
+attended++;
 btn.classList.add("selectedP");
-overallAttended++;
 }else{
 btn.classList.add("selectedA");
 }
 
-overallConducted++;
-
-let key=day.substring(0,3);
-
-weekly[key]++;
-
-updateGraph();
-
-}
-
-let chart;
-
-function createGraph(){
-
-let ctx=document.getElementById("weeklyChart");
-
-chart=new Chart(ctx,{
-
-type:"bar",
-
-data:{
-labels:["Mon","Tue","Wed","Thu","Fri","Sat"],
-datasets:[{
-label:"Classes Marked",
-data:Object.values(weekly),
-backgroundColor:"#22c55e"
-}]
-},
-
-options:{
-scales:{
-y:{
-beginAtZero:true
-}
-}
-}
-
-});
-
-}
-
-function updateGraph(){
-
-chart.data.datasets[0].data=Object.values(weekly);
-chart.update();
+updateOverall();
 
 }
 
 function start(){
 
-showSection("mark");
-
-createGraph();
+updateOverall();
+loadToday();
+showSection("home");
 
 }
 
-</script></head><body onload="start()"><header>Attendance Tracker</header><div id="mark" class="section container"><div class="card"><h3>Select Date</h3><input type="date" id="datePicker" onchange="loadDay()"><div id="todayClasses"></div></div></div><div id="graphSection" class="section container"><div class="card"><h3>Weekly Attendance Graph</h3><canvas id="weeklyChart"></canvas>
-
-</div></div><div class="nav"><div onclick="showSection('mark')">✅ Mark</div>
-<div onclick="showSection('graphSection')">📊 Graph</div></div></body>
+</script></head><body onload="start()"><header>Attendance Portal</header><div id="home" class="section"><div class="card"><h3>Overall Attendance</h3><p>Attended: <span id="attended"></span></p>
+<p>Conducted: <span id="conducted"></span></p><h2 id="percent"></h2><p id="bunk"></p></div></div><div id="mark" class="section"><div class="card"><h3>Today's Classes (<span id="today"></span>)</h3><div id="todayClasses"></div></div></div><div class="nav"><div onclick="showSection('home')">🏠 Home</div>
+<div onclick="showSection('mark')">✅ Mark</div></div></body>
 </html>
